@@ -1,0 +1,71 @@
+# Databricks Asset Bundle Configuration
+# This file defines your CI/CD pipeline for Dev, UAT, and Prod environments
+
+bundle:
+  name: medallion_etl_pipeline
+
+include:
+  - resources/*.yml
+
+variables:
+  # Default variables (can be overridden per environment)
+  catalog:
+    description: Unity Catalog name
+    default: main
+  
+  environment:
+    description: Environment name (dev/uat/prod)
+  
+  job_prefix:
+    description: Prefix for job names
+    default: ""
+
+targets:
+  # Development environment
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: ${DATABRICKS_HOST}
+      auth_type: oauth-m2m
+      client_id: ${DATABRICKS_CLIENT_ID}
+      client_secret: ${DATABRICKS_CLIENT_SECRET}
+    
+    variables:
+      environment: dev
+      schema: default
+      job_prefix: dev_
+      table_prefix: dev_
+  
+  # UAT environment
+  uat:
+    mode: production
+    workspace:
+      host: ${DATABRICKS_HOST}
+      auth_type: oauth-m2m
+      client_id: ${DATABRICKS_CLIENT_ID}
+      client_secret: ${DATABRICKS_CLIENT_SECRET}
+    
+    variables:
+      environment: uat
+      schema: default
+      job_prefix: uat_
+      table_prefix: uat_
+  
+  # Production environment (main branch)
+  prod:
+    mode: production
+    workspace:
+      host: ${DATABRICKS_HOST}
+      auth_type: oauth-m2m
+      client_id: ${DATABRICKS_CLIENT_ID}
+      client_secret: ${DATABRICKS_CLIENT_SECRET}
+    
+    variables:
+      environment: prod
+      schema: default
+      job_prefix: prod_
+      table_prefix: prod_
+    
+    run_as:
+      service_principal_name: cicd-deployment-sp
