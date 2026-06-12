@@ -1,0 +1,50 @@
+# Job Definitions for Medallion ETL Pipeline
+# This file defines the workflow that orchestrates bronze, silver, and gold layers
+
+resources:
+  jobs:
+    medallion_etl_job:
+      name: "${var.job_prefix}medallion_etl_pipeline"
+      
+      email_notifications:
+        on_failure:
+          - ${workspace.current_user.userName}
+      
+      tasks:
+        - task_key: bronze_ingestion
+          description: "Ingest raw transaction data into bronze layer"
+          
+          notebook_task:
+            notebook_path: ./src/bronze/01_ingest_raw_transactions
+            source: WORKSPACE
+          
+          timeout_seconds: 3600
+        
+        - task_key: silver_cleansing
+          description: "Cleanse and validate data for silver layer"
+          
+          depends_on:
+            - task_key: bronze_ingestion
+          
+          notebook_task:
+            notebook_path: ./src/silver/02_cleanse_transactions
+            source: WORKSPACE
+          
+          timeout_seconds: 3600
+        
+        - task_key: gold_aggregation
+          description: "Create business metrics and aggregates"
+          
+          depends_on:
+            - task_key: silver_cleansing
+          
+          notebook_task:
+            notebook_path: ./src/gold/03_business_metrics
+            source: WORKSPACE
+          
+          timeout_seconds: 3600
+      
+      queue:
+        enabled: true
+      
+      max_concurrent_runs: 1
